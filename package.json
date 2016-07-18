@@ -1,0 +1,22 @@
+{
+  "name": "telegritba",
+  "version": "0.1.0",
+  "description": "Telegritba is the unofficial telegram bot for ITBA. Wondering your class time, or classroom? Just ask!",
+  "main": "run.js",
+  "scripts": {
+    "test": "test"
+  },
+  "keywords": [
+    "telegram",
+    "bot",
+    "itba",
+    "itba",
+    "asignacion",
+    "aulas",
+    "itba",
+    "itba",
+    "horarios"
+  ],
+  "author": "rama",
+  "license": "ISC"
+}
