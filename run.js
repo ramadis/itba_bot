@@ -8,6 +8,47 @@ const fs = require('fs');
 const TelegramBot = require('node-telegram-bot-api');
 const app = express();
 
+// Clases is a Collection for the clases.
+class Clases {
+  constructor (clases) {
+    this.clases = clases || Clases.getFromURI();
+    const intervalRequest = setInterval(() => getFromURI(), 5 * 60 * 1000);
+  }
+
+  where (searchQuery) {
+    return searchQuery && this.clases.filter((clase) => clase.is(diacritics.remove(searchQuery)));
+  };
+
+  static getFromURI (URI) {
+    URI = URI || process.env.DATA_SOURCE;
+
+    const clases = [];
+    request(URI).then((html) => {
+      // Maps html structure. Represents column number.
+      const mapValues = {
+        name: 3,
+        startTime: 5,
+        endTime: 6,
+        classroom: 7
+      };
+
+      // Remove cheerio wrapper
+      const $ = cheerio.load(html);
+      const names = unwrappCell(mapValues.name, $);
+      const startTime = unwrappCell(mapValues.startTime, $);
+      const endTime = unwrappCell(mapValues.endTime, $);
+      const classroom = unwrappCell(mapValues.classroom, $);
+
+      // Generate classes array.
+      for (let i = 1; i < names.length; i++) {
+        if (classroom[i]) clases.push(new Clase(names[i], startTime[i], endTime[i], classroom[i]));
+      }
+    });
+
+    return this.clases = clases;
+  }
+}
+
 // Bot wrapper class to interact with Telegram's bot api.
 class Bot {
   static get token () { return process.env.TELEGRAM_TOKEN }
@@ -18,22 +59,25 @@ class Bot {
 
   static manageEntry (entry, user) {
     if (!entry) return 'No puedo ayudarte con eso, che.';
-    if (entry.match(/\/start/)) return `¡Que empiece la fiesta! Mandame el nombre de la materia de la cual querés saber el aula`;
-    if (entry.match(/\//)) return 'No pa, solo nombres de materias. Nada de esas / medio raras que usan otros bots';
-    if (entry.match(/(puto | gil | trolo | conchudo | salame | puta | conchudo)/)) return 'Tu vieja no piensa lo mismo.';
-    return;
+    
+    const responses = {
+      '/\/start/': '¡Que empiece la fiesta! Mandame el nombre de la materia de la cual querés saber el aula',
+      '/\//': 'No pa, solo nombres de materias. Nada de esas / medio raras que usan otros bots',
+      '/(puto | gil | trolo | conchudo | salame | puta | conchudo)/': 'Tu vieja no piensa lo mismo.'
+    }
+
+    return responses[_.keys(responses).find((key) => entry.match(new RegExp(key)))];
   }
 
-  listen () {
+  listen (clases) {
     this.bot.on('text', (msg) => {
-      const response = Bot.manageEntry(msg.text, msg.from) || searchRequest(msg.text.toLowerCase()) || Bot.manageEntry();
+      const response = Bot.manageEntry(msg.text, msg.from) || clases.where(msg.text.toLowerCase()).join('\n') || Bot.manageEntry();
       this.bot.sendMessage(msg.from.id, response);
     });    
   }
 }
 
 // Clase class represent a given class.
-let clasesArr = [];
 class Clase {
   constructor (name, startTime, endTime, classroom) {
     this.name = name;
@@ -62,47 +106,8 @@ const unwrappCell = (cellIdx, $) => {
 };
 
 
-const searchRequest = (searchQuery) => {
-  return searchQuery && clasesArr.filter((clase) => clase.is(diacritics.remove(searchQuery))).join('\n');
-};
-
-const processRequest = (html) => {
-  // Maps html structure. Represents column number.
-  const mapValues = {
-    name: 3,
-    startTime: 5,
-    endTime: 6,
-    classroom: 7
-  };
-
-  // Remove cheerio wrapper
-  const $ = cheerio.load(htmlComplete);
-  const names = unwrappCell(mapValues.name, $);
-  const startTime = unwrappCell(mapValues.startTime, $);
-  const endTime = unwrappCell(mapValues.endTime, $);
-  const classroom = unwrappCell(mapValues.classroom, $);
-
-  // Generate classes array.
-  const clases = [];
-  for (let i = 1; i < names.length; i++) {
-    if (classroom[i]) {
-      clases.push(new Clase(names[i], startTime[i], endTime[i], classroom[i]));
-    }
-  }
-
-  clasesArr = clases;
-};
-
-const makeRequest = () => {
-  const url = process.env.DATA_SOURCE;
-  request(url).then(processRequest);
-};
-
 app.listen(process.env.PORT || 3000, () => null);
 app.get('/', (req, res) => res.send("Download bot from https://storebot.me/bot/itba_bot"));
-(() => {
-  const bot = new Bot();
-  bot.listen();
-  makeRequest();
-  const intervalRequest = setInterval(() => makeRequest(), 5 * 60 * 1000);
-})();
+
+// Program execution
+(() => new Bot().listen(new Clases()))();
