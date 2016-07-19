@@ -4,7 +4,8 @@
   "description": "Telegritba is the unofficial telegram bot for ITBA. Wondering your class time, or classroom? Just ask!",
   "main": "run.js",
   "scripts": {
-    "test": "test"
+    "test": "test",
+    "start": "node run.js"
   },
   "keywords": [
     "telegram",
@@ -18,5 +19,15 @@
     "horarios"
   ],
   "author": "rama",
-  "license": "ISC"
+  "license": "ISC",
+  "dependencies": {
+    "cheerio": "^0.20.0",
+    "diacritics": "^1.2.3",
+    "express": "^4.14.0",
+    "fs": "0.0.2",
+    "lodash": "^4.13.1",
+    "node-telegram-bot-api": "^0.23.3",
+    "request": "^2.73.0",
+    "request-promise": "^4.0.2"
+  }
 }
