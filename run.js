@@ -8,6 +8,7 @@ const fs = require('fs');
 const TelegramBot = require('node-telegram-bot-api');
 const app = express();
 
+// Bot wrapper class to interact with Telegram's bot api.
 class Bot {
   static get token () { return process.env.TELEGRAM_TOKEN }
   
@@ -17,11 +18,9 @@ class Bot {
 
   static manageEntry (entry, user) {
     if (!entry) return 'No puedo ayudarte con eso, che.';
-
     if (entry.match(/\/start/)) return `¡Que empiece la fiesta! Mandame el nombre de la materia de la cual querés saber el aula`;
     if (entry.match(/\//)) return 'No pa, solo nombres de materias. Nada de esas / medio raras que usan otros bots';
     if (entry.match(/(puto | gil | trolo | conchudo | salame | puta | conchudo)/)) return 'Tu vieja no piensa lo mismo.';
-
     return;
   }
 
@@ -33,20 +32,8 @@ class Bot {
   }
 }
 
-const fail = (err) => console.error(err);
-
+// Clase class represent a given class.
 let clasesArr = [];
-let htmlComplete = {};
-const unwrappCell = (cellIdx) => {
-  const arr = [];
-  const $ = cheerio.load(htmlComplete);
-  const arrWrapped = $('table > tbody > tr').find(`td:nth-child(${cellIdx})`).each((idx, el) => {
-    if (el.children.length) arr.push(el.children[0].data.toLowerCase());
-  });
-
-  return arr;
-};
-
 class Clase {
   constructor (name, startTime, endTime, classroom) {
     this.name = name;
@@ -60,30 +47,26 @@ class Clase {
     this._name = diacritics.remove(name.toLowerCase());
   }
 
-  is (name) {
-    if (this.name.includes(name)) return this;
-    return null;
-  }
+  is (name) { return this.name.includes(name) && this; }
 
   toString () {
     return `${this.name} empieza a las ${this.startTime} en el aula ${this.classroom}`;
   }
 }
 
+// Strips data from cheerio wrapper
+const unwrappCell = (cellIdx, $) => {
+  return $('table > tbody > tr').find(`td:nth-child(${cellIdx})`)
+                                .filter((idx, el) => el.children.length)
+                                .map((idx, el) => el.children[0].data.toLowerCase()) || [];
+};
+
+
 const searchRequest = (searchQuery) => {
-  if (!searchQuery) return;
-  let response = '';
-
-  clasesArr.forEach((clase) => {
-    if (clase.is(diacritics.remove(searchQuery))) response += clase + '\n';
-  });
-
-  return response;
+  return searchQuery && clasesArr.filter((clase) => clase.is(diacritics.remove(searchQuery))).join('\n');
 };
 
 const processRequest = (html) => {
-  htmlComplete = html;
-
   // Maps html structure. Represents column number.
   const mapValues = {
     name: 3,
@@ -93,10 +76,11 @@ const processRequest = (html) => {
   };
 
   // Remove cheerio wrapper
-  const names = unwrappCell(mapValues.name);
-  const startTime = unwrappCell(mapValues.startTime);
-  const endTime = unwrappCell(mapValues.endTime);
-  const classroom = unwrappCell(mapValues.classroom);
+  const $ = cheerio.load(htmlComplete);
+  const names = unwrappCell(mapValues.name, $);
+  const startTime = unwrappCell(mapValues.startTime, $);
+  const endTime = unwrappCell(mapValues.endTime, $);
+  const classroom = unwrappCell(mapValues.classroom, $);
 
   // Generate classes array.
   const clases = [];
@@ -111,11 +95,11 @@ const processRequest = (html) => {
 
 const makeRequest = () => {
   const url = process.env.DATA_SOURCE;
-  request(url).then(processRequest).catch(fail);
+  request(url).then(processRequest);
 };
 
 app.listen(process.env.PORT || 3000, () => null);
-app.get('/', (req, res) => res.send("hola"));
+app.get('/', (req, res) => res.send("Download bot from https://storebot.me/bot/itba_bot"));
 (() => {
   const bot = new Bot();
   bot.listen();
