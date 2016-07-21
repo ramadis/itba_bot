@@ -41,7 +41,7 @@ class Clases {
 
       // Generate classes array.
       for (let i = 1; i < names.length; i++) {
-        if (classroom[i]) clases.push(new Clase(names[i], startTime[i], endTime[i], classroom[i]));
+        if (classroom[i]) clases.push(new Clase(names[i], startTime[i - 2], endTime[i - 2], classroom[i - 2]));
       }
     });
 
