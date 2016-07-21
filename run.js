@@ -63,7 +63,7 @@ class Bot {
     const responses = {
       '\/start': '¡Que empiece la fiesta! Mandame el nombre de la materia de la cual querés saber el aula',
       '\/': 'No pa, solo nombres de materias. Nada de esas / medio raras que usan otros bots',
-      'puto|gil|trolo|conchudo|salame|puta': 'Tu vieja no piensa lo mismo.'
+      '(^(put|gil|trol|conchud|salame|mierda))|[^a-z](put|gil|trol|conchud|salame|mierda)': 'Tu vieja no piensa lo mismo.'
     }
 
     return responses[_.keys(responses).find((key) => entry.match(new RegExp(key)))];
@@ -71,7 +71,7 @@ class Bot {
 
   listen (clases) {
     this.bot.on('text', (msg) => {
-      msg.text = msg.text.toLowerCase();
+      msg.text = msg.text.toLowerCase().trim();
       const response = Bot.manageEntry(msg.text, msg.from) || clases.where(msg.text).join('\n') || Bot.manageEntry();
       this.bot.sendMessage(msg.from.id, response);
     });    
