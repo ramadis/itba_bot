@@ -12,7 +12,7 @@ const app = express();
 class Clases {
   constructor (clases) {
     this.clases = clases || Clases.getFromURI();
-    const intervalRequest = setInterval(() => getFromURI(), 5 * 60 * 1000);
+    const intervalRequest = setInterval(() => Clases.getFromURI(), 5 * 60 * 1000);
   }
 
   where (searchQuery) {
